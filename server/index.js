@@ -2,17 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-dotenv.config();
 import { authController } from './controllers/authController.js';
 import { postController } from './controllers/postController.js';
 import { auth } from './middleware/auth.js';
 import { initializeDefaultUser } from './models/User.js';
+
+dotenv.config();
+// Configuración de la base de datos
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
+if (!MONGODB_URI) {
+  console.error('MongoDB URI is not defined in the environment variables');
+  process.exit(1);
+}
+
+// Conexión a MongoDB Atlas
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB Atlas');
