@@ -2,15 +2,22 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
+interface Post {
+  _id: string;
+  title: string;
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 const router = useRouter();
-const posts = ref([]);
-const newPost = ref({ title: '', content: '' });
-const editingPost = ref(null);
-const message = ref('');
+const posts = ref<Post[]>([]);
+const newPost = ref<Omit<Post, '_id'>>({ title: '', content: '' });
+const editingPost = ref<string | null>(null);
+const message = ref<string>('');
+const token = localStorage.getItem('token') as string;
 
-const token = localStorage.getItem('token');
-
-const fetchPosts = async () => {
+const fetchPosts = async (): Promise<void> => {
   try {
     const response = await fetch('http://localhost:3000/api/posts', {
       headers: {
@@ -19,14 +26,14 @@ const fetchPosts = async () => {
     });
     const data = await response.json();
     if (data.success) {
-      posts.value = data.posts;
+      posts.value = data.posts as Post[];
     }
   } catch (error) {
     message.value = 'Error fetching posts';
   }
 };
 
-const createPost = async () => {
+const createPost = async (): Promise<void> => {
   try {
     const response = await fetch('http://localhost:3000/api/posts', {
       method: 'POST',
@@ -38,7 +45,7 @@ const createPost = async () => {
     });
     const data = await response.json();
     if (data.success) {
-      posts.value.unshift(data.post);
+      posts.value.unshift(data.post as Post);
       newPost.value = { title: '', content: '' };
       message.value = 'Post created successfully';
     }
@@ -47,7 +54,7 @@ const createPost = async () => {
   }
 };
 
-const updatePost = async (post) => {
+const updatePost = async (post: Post): Promise<void> => {
   try {
     const response = await fetch(`http://localhost:3000/api/posts/${post._id}`, {
       method: 'PUT',
@@ -59,8 +66,8 @@ const updatePost = async (post) => {
     });
     const data = await response.json();
     if (data.success) {
-      const index = posts.value.findIndex(p => p._id === post._id);
-      posts.value[index] = data.post;
+      const index = posts.value.findIndex((p: Post) => p._id === post._id);
+      posts.value[index] = data.post as Post;
       editingPost.value = null;
       message.value = 'Post updated successfully';
     }
@@ -69,7 +76,7 @@ const updatePost = async (post) => {
   }
 };
 
-const deletePost = async (postId) => {
+const deletePost = async (postId: string): Promise<void> => {
   try {
     const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
       method: 'DELETE',
@@ -79,7 +86,7 @@ const deletePost = async (postId) => {
     });
     const data = await response.json();
     if (data.success) {
-      posts.value = posts.value.filter(p => p._id !== postId);
+      posts.value = posts.value.filter((p: Post) => p._id !== postId);
       message.value = 'Post deleted successfully';
     }
   } catch (error) {
@@ -87,13 +94,16 @@ const deletePost = async (postId) => {
   }
 };
 
-const logout = () => {
+const logout = (): void => {
   localStorage.removeItem('token');
   localStorage.removeItem('userId');
   router.push('/');
 };
 
-onMounted(fetchPosts);
+onMounted((): void => {
+  if (!token) router.push('/login');
+  fetchPosts();
+});
 </script>
 
 <template>

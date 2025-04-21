@@ -16,7 +16,8 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+// Versión limpia (sin 'from' no utilizado)
+router.beforeEach((to, _, next) => {  // Usamos '_' para ignorar el parámetro
   if (to.meta.requiresAuth && !localStorage.getItem('token')) {
     next('/');
   } else {
